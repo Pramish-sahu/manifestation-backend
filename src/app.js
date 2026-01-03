@@ -1,5 +1,6 @@
 import cors from "cors";
 import express from "express";
+import protect from "./middleware/authMiddleware.js";
 import authRoutes from "./routes/authRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
 import manifestationRoutes from "./routes/manifestationRoutes.js";
@@ -13,19 +14,16 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+/* 🔓 PUBLIC ROUTES (NO TOKEN REQUIRED) */
 app.use("/api/auth", authRoutes);
 
-app.use("/api/workspace", workspaceRoutes);
-
-app.use("/api/study", studyRoutes);
-
-app.use("/api/vault", vaultRoutes);
-
-app.use("/api/streak", streakRoutes);
-
-app.use("/api/manifestation", manifestationRoutes);
-
-app.use("/api/dashboard", dashboardRoutes);
+/* 🔐 PROTECTED ROUTES (TOKEN REQUIRED) */
+app.use("/api/workspace", protect, workspaceRoutes);
+app.use("/api/study", protect, studyRoutes);
+app.use("/api/vault", protect, vaultRoutes);
+app.use("/api/streak", protect, streakRoutes);
+app.use("/api/manifestation", protect, manifestationRoutes);
+app.use("/api/dashboard", protect, dashboardRoutes);
 
 app.get("/", (req, res) => {
   res.send("🚀 Manifestation Backend Running");
