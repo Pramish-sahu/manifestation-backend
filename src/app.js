@@ -1,6 +1,7 @@
 import cors from "cors";
 import express from "express";
 import protect from "./middleware/authMiddleware.js";
+import errorHandler from "./middleware/errorMiddleware.js";
 import authRoutes from "./routes/authRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
 import manifestationRoutes from "./routes/manifestationRoutes.js";
@@ -24,6 +25,8 @@ app.use("/api/vault", protect, vaultRoutes);
 app.use("/api/streak", protect, streakRoutes);
 app.use("/api/manifestation", protect, manifestationRoutes);
 app.use("/api/dashboard", protect, dashboardRoutes);
+
+app.use(errorHandler);
 
 app.get("/", (req, res) => {
   res.send("🚀 Manifestation Backend Running");
