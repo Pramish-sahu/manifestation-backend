@@ -14,11 +14,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-/* 🔓 PUBLIC ROUTES */
+/* 🔓 PUBLIC */
 app.use("/api/auth", authRoutes);
 
-/* 🔐 PROTECTED ROUTES 
-   (protection handled INSIDE route files) */
+/* 🔐 PROTECTED (middleware INSIDE route files) */
 app.use("/api/workspace", workspaceRoutes);
 app.use("/api/study", studyRoutes);
 app.use("/api/vault", vaultRoutes);
