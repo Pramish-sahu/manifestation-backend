@@ -5,12 +5,14 @@ import FamilyItem from "../models/FamilyItem.js";
  * @route  POST /api/family
  * @access Private
  */
-export const addFamilyItem = async (req, res) => {
+export const addFamilyItem = async (req, res, next) => {
   try {
     const { type, title, content, fileUrl } = req.body;
 
     if (!type || !title) {
-      return res.status(400).json({ message: "Type and title are required" });
+      return res
+        .status(400)
+        .json({ message: "Type and title are required" });
     }
 
     const item = await FamilyItem.create({
@@ -24,7 +26,7 @@ export const addFamilyItem = async (req, res) => {
 
     res.status(201).json(item);
   } catch (error) {
-    res.status(500).json({ message: "Failed to add family item" });
+    next(error);
   }
 };
 
@@ -33,7 +35,7 @@ export const addFamilyItem = async (req, res) => {
  * @route  GET /api/family
  * @access Private
  */
-export const getFamilyItems = async (req, res) => {
+export const getFamilyItems = async (req, res, next) => {
   try {
     const items = await FamilyItem.find({
       workspace: req.user.workspaceId,
@@ -43,6 +45,6 @@ export const getFamilyItems = async (req, res) => {
 
     res.json(items);
   } catch (error) {
-    res.status(500).json({ message: "Failed to fetch family items" });
+    next(error);
   }
 };

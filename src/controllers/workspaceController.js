@@ -7,9 +7,13 @@ import User from "../models/userModel.js";
  * @route  POST /api/workspace/create
  * @access Private
  */
-export const createWorkspace = async (req, res) => {
+export const createWorkspace = async (req, res, next) => {
   try {
     const { type } = req.body;
+
+    if (!type) {
+      return res.status(400).json({ message: "Workspace type required" });
+    }
 
     const inviteCode = crypto.randomBytes(4).toString("hex").toUpperCase();
 
@@ -25,7 +29,7 @@ export const createWorkspace = async (req, res) => {
 
     res.status(201).json(workspace);
   } catch (error) {
-    res.status(500).json({ message: "Failed to create workspace" });
+    next(error);
   }
 };
 
@@ -34,9 +38,13 @@ export const createWorkspace = async (req, res) => {
  * @route  POST /api/workspace/join
  * @access Private
  */
-export const joinWorkspace = async (req, res) => {
+export const joinWorkspace = async (req, res, next) => {
   try {
     const { inviteCode } = req.body;
+
+    if (!inviteCode) {
+      return res.status(400).json({ message: "Invite code required" });
+    }
 
     const workspace = await Workspace.findOne({ inviteCode });
 
@@ -55,7 +63,7 @@ export const joinWorkspace = async (req, res) => {
 
     res.json({ message: "Joined workspace successfully" });
   } catch (error) {
-    res.status(500).json({ message: "Failed to join workspace" });
+    next(error);
   }
 };
 
@@ -64,7 +72,7 @@ export const joinWorkspace = async (req, res) => {
  * @route  GET /api/workspace/members
  * @access Private
  */
-export const getWorkspaceMembers = async (req, res) => {
+export const getWorkspaceMembers = async (req, res, next) => {
   try {
     const user = await User.findById(req.user._id).populate({
       path: "workspaceId",
@@ -80,6 +88,6 @@ export const getWorkspaceMembers = async (req, res) => {
 
     res.json(user.workspaceId.members);
   } catch (error) {
-    res.status(500).json({ message: "Failed to fetch members" });
+    next(error);
   }
 };

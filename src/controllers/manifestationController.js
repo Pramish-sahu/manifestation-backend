@@ -1,7 +1,7 @@
 import Manifestation from "../models/Manifestation.js";
 
 /* ================= ADD MANIFESTATION ================= */
-export const addManifestation = async (req, res) => {
+export const addManifestation = async (req, res, next) => {
   try {
     const { text, category, isDaily } = req.body;
 
@@ -19,12 +19,12 @@ export const addManifestation = async (req, res) => {
 
     res.status(201).json(manifestation);
   } catch (error) {
-    res.status(500).json({ message: "Failed to add manifestation" });
+    next(error);
   }
 };
 
 /* ================= GET MANIFESTATIONS ================= */
-export const getManifestations = async (req, res) => {
+export const getManifestations = async (req, res, next) => {
   try {
     const manifestations = await Manifestation.find({
       workspace: req.user.workspaceId,
@@ -34,12 +34,12 @@ export const getManifestations = async (req, res) => {
 
     res.json(manifestations);
   } catch (error) {
-    res.status(500).json({ message: "Failed to fetch manifestations" });
+    next(error);
   }
 };
 
 /* ================= DELETE MANIFESTATION ================= */
-export const deleteManifestation = async (req, res) => {
+export const deleteManifestation = async (req, res, next) => {
   try {
     const manifestation = await Manifestation.findById(req.params.id);
 
@@ -54,6 +54,6 @@ export const deleteManifestation = async (req, res) => {
     await manifestation.deleteOne();
     res.json({ message: "Deleted successfully" });
   } catch (error) {
-    res.status(500).json({ message: "Delete failed" });
+    next(error);
   }
 };

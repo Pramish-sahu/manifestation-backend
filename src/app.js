@@ -1,6 +1,7 @@
 import cors from "cors";
 import express from "express";
 
+import errorHandler from "./middleware/errorMiddleware.js";
 import authRoutes from "./routes/authRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
 import manifestationRoutes from "./routes/manifestationRoutes.js";
@@ -25,8 +26,13 @@ app.use("/api/streak", streakRoutes);
 app.use("/api/manifestation", manifestationRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 
+app.use(errorHandler);
+
 app.get("/", (req, res) => {
   res.send("🚀 Manifestation Backend Running");
 });
 
+
 export default app;
+
+

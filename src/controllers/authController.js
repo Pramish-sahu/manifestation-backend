@@ -2,17 +2,19 @@ import User from "../models/userModel.js";
 import generateToken from "../utils/generateToken.js";
 
 /* ================= REGISTER ================= */
-export const registerUser = async (req, res) => {
+export const registerUser = async (req, res, next) => {
   try {
     const { name, username, password } = req.body;
 
     if (!name || !username || !password) {
-      return res.status(400).json({ message: "All fields required" });
+      res.status(400);
+      throw new Error("All fields required");
     }
 
     const userExists = await User.findOne({ username });
     if (userExists) {
-      return res.status(400).json({ message: "User already exists" });
+      res.status(400);
+      throw new Error("User already exists");
     }
 
     const user = await User.create({
@@ -28,18 +30,19 @@ export const registerUser = async (req, res) => {
       token: generateToken(user._id),
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 };
 
 /* ================= LOGIN ================= */
-export const loginUser = async (req, res) => {
+export const loginUser = async (req, res, next) => {
   try {
     const { username, password } = req.body;
 
     const user = await User.findOne({ username });
     if (!user || !(await user.matchPassword(password))) {
-      return res.status(401).json({ message: "Invalid credentials" });
+      res.status(401);
+      throw new Error("Invalid credentials");
     }
 
     res.json({
@@ -49,6 +52,6 @@ export const loginUser = async (req, res) => {
       token: generateToken(user._id),
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 };

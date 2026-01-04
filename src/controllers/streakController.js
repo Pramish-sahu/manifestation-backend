@@ -16,52 +16,56 @@ const isYesterday = (lastDate) => {
  * @route POST /api/streak/complete
  * @access Private
  */
-export const completeStreak = async (req, res) => {
-  const { type } = req.body;
+export const completeStreak = async (req, res, next) => {
+  try {
+    const { type } = req.body;
 
-  if (!type) {
-    return res.status(400).json({ message: "Streak type required" });
-  }
+    if (!type) {
+      return res.status(400).json({ message: "Streak type required" });
+    }
 
-  let streak = await Streak.findOne({
-    user: req.user._id,
-    type,
-  });
-
-  const today = new Date();
-
-  if (!streak) {
-    streak = await Streak.create({
-      type,
-      currentStreak: 1,
-      longestStreak: 1,
-      lastCompleted: today,
+    let streak = await Streak.findOne({
       user: req.user._id,
-      workspace: req.user.workspaceId,
+      type,
     });
 
-    return res.json(streak);
+    const today = new Date();
+
+    if (!streak) {
+      streak = await Streak.create({
+        type,
+        currentStreak: 1,
+        longestStreak: 1,
+        lastCompleted: today,
+        user: req.user._id,
+        workspace: req.user.workspaceId,
+      });
+
+      return res.json(streak);
+    }
+
+    if (streak.lastCompleted && isSameDay(streak.lastCompleted, today)) {
+      return res.json(streak); // already completed today
+    }
+
+    if (streak.lastCompleted && isYesterday(streak.lastCompleted)) {
+      streak.currentStreak += 1;
+    } else {
+      streak.currentStreak = 1;
+    }
+
+    streak.longestStreak = Math.max(
+      streak.longestStreak,
+      streak.currentStreak
+    );
+
+    streak.lastCompleted = today;
+    await streak.save();
+
+    res.json(streak);
+  } catch (error) {
+    next(error);
   }
-
-  if (streak.lastCompleted && isSameDay(streak.lastCompleted, today)) {
-    return res.json(streak); // already completed today
-  }
-
-  if (streak.lastCompleted && isYesterday(streak.lastCompleted)) {
-    streak.currentStreak += 1;
-  } else {
-    streak.currentStreak = 1;
-  }
-
-  streak.longestStreak = Math.max(
-    streak.longestStreak,
-    streak.currentStreak
-  );
-
-  streak.lastCompleted = today;
-  await streak.save();
-
-  res.json(streak);
 };
 
 /**
@@ -69,10 +73,14 @@ export const completeStreak = async (req, res) => {
  * @route GET /api/streak
  * @access Private
  */
-export const getStreaks = async (req, res) => {
-  const streaks = await Streak.find({
-    user: req.user._id,
-  });
+export const getStreaks = async (req, res, next) => {
+  try {
+    const streaks = await Streak.find({
+      user: req.user._id,
+    });
 
-  res.json(streaks);
+    res.json(streaks);
+  } catch (error) {
+    next(error);
+  }
 };

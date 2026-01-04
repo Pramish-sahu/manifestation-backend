@@ -5,7 +5,7 @@ import Study from "../models/Study.js";
  * @route  POST /api/study/log
  * @access Private
  */
-export const addStudyLog = async (req, res) => {
+export const addStudyLog = async (req, res, next) => {
   try {
     const { hours, topic, note } = req.body;
 
@@ -31,7 +31,7 @@ export const addStudyLog = async (req, res) => {
 
     res.status(201).json(study);
   } catch (error) {
-    res.status(500).json({ message: "Failed to add study log" });
+    next(error);
   }
 };
 
@@ -40,7 +40,7 @@ export const addStudyLog = async (req, res) => {
  * @route  GET /api/study
  * @access Private
  */
-export const getStudyLogs = async (req, res) => {
+export const getStudyLogs = async (req, res, next) => {
   try {
     if (!req.user.workspaceId) {
       return res
@@ -52,11 +52,11 @@ export const getStudyLogs = async (req, res) => {
       workspace: req.user.workspaceId,
     })
       .populate("user", "name username")
-      .sort({ date: -1 });
+      .sort({ createdAt: -1 });
 
     res.json(logs);
   } catch (error) {
-    res.status(500).json({ message: "Failed to fetch study logs" });
+    next(error);
   }
 };
 
@@ -65,7 +65,7 @@ export const getStudyLogs = async (req, res) => {
  * @route  GET /api/study/stats
  * @access Private
  */
-export const getStudyStats = async (req, res) => {
+export const getStudyStats = async (req, res, next) => {
   try {
     if (!req.user.workspaceId) {
       return res
@@ -85,6 +85,6 @@ export const getStudyStats = async (req, res) => {
       totalSessions,
     });
   } catch (error) {
-    res.status(500).json({ message: "Failed to fetch stats" });
+    next(error);
   }
 };

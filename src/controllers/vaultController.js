@@ -1,7 +1,12 @@
 import Vault from "../models/Vault.js";
 import { decrypt, encrypt } from "../utils/encrypt.js";
 
-export const addVaultItem = async (req, res) => {
+/**
+ * @desc   Add vault item
+ * @route  POST /api/vault
+ * @access Private
+ */
+export const addVaultItem = async (req, res, next) => {
   try {
     const { title, username, secret, note } = req.body;
 
@@ -21,12 +26,17 @@ export const addVaultItem = async (req, res) => {
     });
 
     res.status(201).json(vault);
-  } catch (err) {
-    res.status(500).json({ message: "Vault save failed" });
+  } catch (error) {
+    next(error);
   }
 };
 
-export const getVaultItems = async (req, res) => {
+/**
+ * @desc   Get all vault items
+ * @route  GET /api/vault
+ * @access Private
+ */
+export const getVaultItems = async (req, res, next) => {
   try {
     const items = await Vault.find({
       workspace: req.user.workspaceId,
@@ -38,16 +48,23 @@ export const getVaultItems = async (req, res) => {
     }));
 
     res.json(decrypted);
-  } catch {
-    res.status(500).json({ message: "Fetch failed" });
+  } catch (error) {
+    next(error);
   }
 };
 
-export const deleteVaultItem = async (req, res) => {
+/**
+ * @desc   Delete vault item
+ * @route  DELETE /api/vault/:id
+ * @access Private
+ */
+export const deleteVaultItem = async (req, res, next) => {
   try {
     const item = await Vault.findById(req.params.id);
 
-    if (!item) return res.status(404).json({ message: "Not found" });
+    if (!item) {
+      return res.status(404).json({ message: "Not found" });
+    }
 
     if (item.user.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: "Not allowed" });
@@ -55,7 +72,7 @@ export const deleteVaultItem = async (req, res) => {
 
     await item.deleteOne();
     res.json({ message: "Deleted" });
-  } catch {
-    res.status(500).json({ message: "Delete failed" });
+  } catch (error) {
+    next(error);
   }
 };

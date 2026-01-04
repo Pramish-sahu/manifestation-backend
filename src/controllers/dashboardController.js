@@ -4,7 +4,7 @@ import Study from "../models/Study.js";
 import Vault from "../models/Vault.js";
 import Workspace from "../models/Workspace.js";
 
-export const getDashboardData = async (req, res) => {
+export const getDashboardData = async (req, res, next) => {
   try {
     const userId = req.user._id;
     const workspaceId = req.user.workspaceId;
@@ -56,12 +56,11 @@ export const getDashboardData = async (req, res) => {
       manifestationsToday,
       totalManifestations,
       studyMinutesToday,
-      currentStreak: streak ? streak.current : 0,
+      currentStreak: streak ? streak.currentStreak : 0,
       vaultItems,
       workspaceMembers: workspace ? workspace.members.length : 0,
     });
   } catch (error) {
-    res.status(500).json({ message: "Dashboard fetch failed" });
+    next(error);
   }
 };
-
