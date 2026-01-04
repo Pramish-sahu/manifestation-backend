@@ -15,13 +15,12 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-/* 🔐 HASH PASSWORD BEFORE SAVE */
-userSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) return next();
+/* 🔐 HASH PASSWORD BEFORE SAVE (CORRECT WAY) */
+userSchema.pre("save", async function () {
+  if (!this.isModified("password")) return;
 
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
-  next();
 });
 
 /* 🔍 PASSWORD MATCH METHOD */
@@ -29,7 +28,6 @@ userSchema.methods.matchPassword = async function (enteredPassword) {
   return bcrypt.compare(enteredPassword, this.password);
 };
 
-/* ✅ PRODUCTION-SAFE MODEL EXPORT */
+/* ✅ SAFE EXPORT */
 const User = mongoose.models.User || mongoose.model("User", userSchema);
-
 export default User;
