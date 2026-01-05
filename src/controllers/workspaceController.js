@@ -40,6 +40,29 @@ export const createWorkspace = async (req, res) => {
   }
 };
 
+/* GET INVITE CODE */
+export const getInviteCode = async (req, res) => {
+  try {
+    if (!req.user.workspaceId) {
+      return res.status(404).json({ message: "No workspace found" });
+    }
+
+    const workspace = await Workspace.findById(req.user.workspaceId);
+
+    if (!workspace) {
+      return res.status(404).json({ message: "Workspace not found" });
+    }
+
+    res.json({
+      inviteCode: workspace.inviteCode,
+      type: workspace.type,
+    });
+  } catch {
+    res.status(500).json({ message: "Failed to fetch invite code" });
+  }
+};
+
+
 /* JOIN WORKSPACE */
 export const joinWorkspace = async (req, res) => {
   try {
