@@ -49,10 +49,6 @@ export const getInviteCode = async (req, res) => {
 
     const workspace = await Workspace.findById(req.user.workspaceId);
 
-    if (!workspace) {
-      return res.status(404).json({ message: "Workspace not found" });
-    }
-
     res.json({
       inviteCode: workspace.inviteCode,
       type: workspace.type,
@@ -62,8 +58,7 @@ export const getInviteCode = async (req, res) => {
   }
 };
 
-
-/* JOIN WORKSPACE */
+/* JOIN WORKSPACE (SMART RESPONSE) */
 export const joinWorkspace = async (req, res) => {
   try {
     const { inviteCode } = req.body;
@@ -72,12 +67,16 @@ export const joinWorkspace = async (req, res) => {
       return res.status(400).json({ message: "Invite code required" });
     }
 
-    const workspace = await Workspace.findOne({ inviteCode });
+    const workspace = await Workspace.findOne({ inviteCode }).populate({
+      path: "members",
+      select: "name",
+    });
+
     if (!workspace) {
       return res.status(404).json({ message: "Invalid invite code" });
     }
 
-    if (!workspace.members.includes(req.user._id)) {
+    if (!workspace.members.some(m => m._id.equals(req.user._id))) {
       workspace.members.push(req.user._id);
       await workspace.save();
     }
@@ -85,7 +84,13 @@ export const joinWorkspace = async (req, res) => {
     req.user.workspaceId = workspace._id;
     await req.user.save();
 
-    res.json({ message: "Joined workspace successfully" });
+    const owner = workspace.members[0];
+
+    res.json({
+      message: "Joined workspace successfully",
+      ownerName: owner.name,
+      workspaceType: workspace.type,
+    });
   } catch {
     res.status(500).json({ message: "Failed to join workspace" });
   }
@@ -94,14 +99,13 @@ export const joinWorkspace = async (req, res) => {
 /* GET MEMBERS */
 export const getWorkspaceMembers = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id)
-      .populate({
-        path: "workspaceId",
-        populate: {
-          path: "members",
-          select: "name username",
-        },
-      });
+    const user = await User.findById(req.user._id).populate({
+      path: "workspaceId",
+      populate: {
+        path: "members",
+        select: "name username",
+      },
+    });
 
     res.json(user.workspaceId.members);
   } catch {

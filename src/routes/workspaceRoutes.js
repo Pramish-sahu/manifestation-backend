@@ -12,6 +12,6 @@ const router = express.Router();
 router.post("/create", protect, createWorkspace);
 router.post("/join", protect, joinWorkspace);
 router.get("/members", protect, getWorkspaceMembers);
-router.get("/invite", protect, getInviteCode); // ✅ ADD
+router.get("/invite", protect, getInviteCode);
 
 export default router;
