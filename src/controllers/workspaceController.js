@@ -2,12 +2,13 @@ import crypto from "crypto";
 import Workspace from "../models/Workspace.js";
 import User from "../models/userModel.js";
 
+/* CREATE WORKSPACE */
 export const createWorkspace = async (req, res) => {
   try {
     if (req.user.workspaceId) {
-      return res
-        .status(400)
-        .json({ message: "User already belongs to a workspace" });
+      return res.status(400).json({
+        message: "User already belongs to a workspace",
+      });
     }
 
     const { type } = req.body;
@@ -16,12 +17,9 @@ export const createWorkspace = async (req, res) => {
     }
 
     let inviteCode;
-    let exists = true;
-
-    while (exists) {
+    do {
       inviteCode = crypto.randomBytes(4).toString("hex").toUpperCase();
-      exists = await Workspace.exists({ inviteCode });
-    }
+    } while (await Workspace.exists({ inviteCode }));
 
     const workspace = await Workspace.create({
       type,
@@ -29,16 +27,20 @@ export const createWorkspace = async (req, res) => {
       members: [req.user._id],
     });
 
-    await User.findByIdAndUpdate(req.user._id, {
-      workspaceId: workspace._id,
-    });
+    req.user.workspaceId = workspace._id;
+    await req.user.save();
 
-    res.status(201).json(workspace);
-  } catch (error) {
+    res.status(201).json({
+      _id: workspace._id,
+      type: workspace.type,
+      inviteCode: workspace.inviteCode,
+    });
+  } catch {
     res.status(500).json({ message: "Failed to create workspace" });
   }
 };
 
+/* JOIN WORKSPACE */
 export const joinWorkspace = async (req, res) => {
   try {
     const { inviteCode } = req.body;
@@ -57,32 +59,29 @@ export const joinWorkspace = async (req, res) => {
       await workspace.save();
     }
 
-    await User.findByIdAndUpdate(req.user._id, {
-      workspaceId: workspace._id,
-    });
+    req.user.workspaceId = workspace._id;
+    await req.user.save();
 
     res.json({ message: "Joined workspace successfully" });
-  } catch (error) {
+  } catch {
     res.status(500).json({ message: "Failed to join workspace" });
   }
 };
 
+/* GET MEMBERS */
 export const getWorkspaceMembers = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id).populate({
-      path: "workspaceId",
-      populate: {
-        path: "members",
-        select: "name username",
-      },
-    });
-
-    if (!user.workspaceId) {
-      return res.status(404).json({ message: "No workspace found" });
-    }
+    const user = await User.findById(req.user._id)
+      .populate({
+        path: "workspaceId",
+        populate: {
+          path: "members",
+          select: "name username",
+        },
+      });
 
     res.json(user.workspaceId.members);
-  } catch (error) {
+  } catch {
     res.status(500).json({ message: "Failed to fetch members" });
   }
 };
