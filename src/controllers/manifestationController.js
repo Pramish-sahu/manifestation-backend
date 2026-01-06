@@ -1,16 +1,35 @@
 import Manifestation from "../models/Manifestation.js";
 
-/* ================= ADD MANIFESTATION ================= */
-export const addManifestation = async (req, res, next) => {
+/* ======================================================
+   ADD MANIFESTATION (POINT-WISE)
+   POST /api/manifestation
+   Access: Private
+====================================================== */
+export const addManifestation = async (req, res) => {
   try {
-    const { text, category, isDaily } = req.body;
+    const { points, category = "general", isDaily = true } = req.body;
 
-    if (!text) {
-      return res.status(400).json({ message: "Text is required" });
+    // ✅ Validation
+    if (!points || !Array.isArray(points) || points.length === 0) {
+      return res.status(400).json({
+        message: "Manifestation points are required",
+      });
     }
 
+    // Remove empty points
+    const cleanedPoints = points
+      .map((p) => p.trim())
+      .filter((p) => p.length > 0);
+
+    if (cleanedPoints.length === 0) {
+      return res.status(400).json({
+        message: "Manifestation points cannot be empty",
+      });
+    }
+
+    // ✅ Create manifestation
     const manifestation = await Manifestation.create({
-      text,
+      points: cleanedPoints,
       category,
       isDaily,
       user: req.user._id,
@@ -19,12 +38,19 @@ export const addManifestation = async (req, res, next) => {
 
     res.status(201).json(manifestation);
   } catch (error) {
-    next(error);
+    console.error("Add Manifestation Error:", error);
+    res.status(500).json({
+      message: "Failed to add manifestation",
+    });
   }
 };
 
-/* ================= GET MANIFESTATIONS ================= */
-export const getManifestations = async (req, res, next) => {
+/* ======================================================
+   GET ALL MANIFESTATIONS (WORKSPACE SHARED)
+   GET /api/manifestation
+   Access: Private
+====================================================== */
+export const getManifestations = async (req, res) => {
   try {
     const manifestations = await Manifestation.find({
       workspace: req.user.workspaceId,
@@ -34,26 +60,77 @@ export const getManifestations = async (req, res, next) => {
 
     res.json(manifestations);
   } catch (error) {
-    next(error);
+    console.error("Get Manifestations Error:", error);
+    res.status(500).json({
+      message: "Failed to fetch manifestations",
+    });
   }
 };
 
-/* ================= DELETE MANIFESTATION ================= */
-export const deleteManifestation = async (req, res, next) => {
+/* ======================================================
+   GET TODAY'S MANIFESTATIONS (FOR HOME PAGE)
+   GET /api/manifestation/today
+   Access: Private
+====================================================== */
+export const getTodayManifestations = async (req, res) => {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const manifestations = await Manifestation.find({
+      workspace: req.user.workspaceId,
+      createdAt: { $gte: today },
+    })
+      .populate("user", "name")
+      .sort({ createdAt: -1 });
+
+    res.json(
+      manifestations.map((m) => ({
+        id: m._id,
+        points: m.points,
+        author: m.user.name,
+        createdAt: m.createdAt,
+      }))
+    );
+  } catch (error) {
+    console.error("Today Manifestations Error:", error);
+    res.status(500).json({
+      message: "Failed to fetch today's manifestations",
+    });
+  }
+};
+
+/* ======================================================
+   DELETE MANIFESTATION (OWNER ONLY)
+   DELETE /api/manifestation/:id
+   Access: Private
+====================================================== */
+export const deleteManifestation = async (req, res) => {
   try {
     const manifestation = await Manifestation.findById(req.params.id);
 
     if (!manifestation) {
-      return res.status(404).json({ message: "Not found" });
+      return res.status(404).json({
+        message: "Manifestation not found",
+      });
     }
 
+    // ✅ Only creator can delete
     if (manifestation.user.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: "Not allowed" });
+      return res.status(403).json({
+        message: "You are not allowed to delete this manifestation",
+      });
     }
 
     await manifestation.deleteOne();
-    res.json({ message: "Deleted successfully" });
+
+    res.json({
+      message: "Manifestation deleted successfully",
+    });
   } catch (error) {
-    next(error);
+    console.error("Delete Manifestation Error:", error);
+    res.status(500).json({
+      message: "Failed to delete manifestation",
+    });
   }
 };
