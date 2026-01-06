@@ -1,7 +1,7 @@
 import cors from "cors";
 import express from "express";
 
-// import errorHandler from "./middleware/errorMiddleware.js";
+import errorHandler from "./middleware/errorMiddleware.js";
 import authRoutes from "./routes/authRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
 import manifestationRoutes from "./routes/manifestationRoutes.js";

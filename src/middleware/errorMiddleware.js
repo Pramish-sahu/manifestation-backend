@@ -2,7 +2,9 @@ const errorHandler = (err, req, res, next) => {
   console.error("🔥 ERROR STACK:");
   console.error(err);
 
-  res.status(500).json({
+  const statusCode = res.statusCode === 200 ? 500 : res.statusCode;
+
+  res.status(statusCode).json({
     message: err.message || "Internal Server Error",
   });
 };
