@@ -7,20 +7,18 @@ export const registerUser = async (req, res, next) => {
     const { name, username, password } = req.body;
 
     if (!name || !username || !password) {
-      res.status(400);
-      throw new Error("All fields required");
+      return res.status(400).json({ message: "All fields required" });
     }
 
     const userExists = await User.findOne({ username });
     if (userExists) {
-      res.status(400);
-      throw new Error("User already exists");
+      return res.status(400).json({ message: "User already exists" });
     }
 
     const user = await User.create({
       name,
       username,
-      password, // 🔥 plain password, model will hash
+      password,
     });
 
     res.status(201).json({
@@ -28,6 +26,10 @@ export const registerUser = async (req, res, next) => {
       name: user.name,
       username: user.username,
       token: generateToken(user._id),
+
+      // 🔑 IMPORTANT FOR UX
+      hasWorkspace: false,
+      workspaceId: null,
     });
   } catch (error) {
     next(error);
@@ -41,8 +43,7 @@ export const loginUser = async (req, res, next) => {
 
     const user = await User.findOne({ username });
     if (!user || !(await user.matchPassword(password))) {
-      res.status(401);
-      throw new Error("Invalid credentials");
+      return res.status(401).json({ message: "Invalid credentials" });
     }
 
     res.json({
@@ -50,6 +51,10 @@ export const loginUser = async (req, res, next) => {
       name: user.name,
       username: user.username,
       token: generateToken(user._id),
+
+      // 🔑 IMPORTANT FOR UX
+      hasWorkspace: !!user.workspaceId,
+      workspaceId: user.workspaceId || null,
     });
   } catch (error) {
     next(error);
