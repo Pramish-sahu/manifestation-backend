@@ -29,15 +29,8 @@ const studySchema = new mongoose.Schema(
       type: String,
       default: "",
     },
-
-    date: {
-      type: Date,
-      default: Date.now,
-    },
   },
   { timestamps: true }
 );
 
-const Study = mongoose.model("Study", studySchema);
-
-export default Study;
+export default mongoose.model("Study", studySchema);

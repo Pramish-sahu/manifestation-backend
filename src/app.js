@@ -6,6 +6,7 @@ import authRoutes from "./routes/authRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
 import manifestationRoutes from "./routes/manifestationRoutes.js";
 import streakRoutes from "./routes/streakRoutes.js";
+import studyDocumentRoutes from "./routes/studyDocumentRoutes.js";
 import studyRoutes from "./routes/studyRoutes.js";
 import vaultRoutes from "./routes/vaultRoutes.js";
 import workspaceRoutes from "./routes/workspaceRoutes.js";
@@ -21,6 +22,7 @@ app.use("/api/auth", authRoutes);
 /* 🔐 PROTECTED (middleware INSIDE route files) */
 app.use("/api/workspace", workspaceRoutes);
 app.use("/api/study", studyRoutes);
+app.use("/api/study/documents", studyDocumentRoutes);
 app.use("/api/vault", vaultRoutes);
 app.use("/api/streak", streakRoutes);
 app.use("/api/manifestation", manifestationRoutes);

@@ -1,24 +1,12 @@
 import Study from "../models/Study.js";
 
-/**
- * @desc   Add study log
- * @route  POST /api/study/log
- * @access Private
- */
+/* ADD STUDY LOG */
 export const addStudyLog = async (req, res, next) => {
   try {
     const { hours, topic, note } = req.body;
 
     if (!hours || !topic) {
-      return res
-        .status(400)
-        .json({ message: "Hours and topic are required" });
-    }
-
-    if (!req.user.workspaceId) {
-      return res
-        .status(400)
-        .json({ message: "User not part of any workspace" });
+      return res.status(400).json({ message: "Hours and topic required" });
     }
 
     const study = await Study.create({
@@ -30,61 +18,40 @@ export const addStudyLog = async (req, res, next) => {
     });
 
     res.status(201).json(study);
-  } catch (error) {
-    next(error);
+  } catch (err) {
+    next(err);
   }
 };
 
-/**
- * @desc   Get all study logs (workspace)
- * @route  GET /api/study
- * @access Private
- */
+/* GET WORKSPACE LOGS */
 export const getStudyLogs = async (req, res, next) => {
   try {
-    if (!req.user.workspaceId) {
-      return res
-        .status(400)
-        .json({ message: "User not part of any workspace" });
-    }
-
     const logs = await Study.find({
       workspace: req.user.workspaceId,
     })
-      .populate("user", "name username")
+      .populate("user", "name")
       .sort({ createdAt: -1 });
 
     res.json(logs);
-  } catch (error) {
-    next(error);
+  } catch (err) {
+    next(err);
   }
 };
 
-/**
- * @desc   Get study stats
- * @route  GET /api/study/stats
- * @access Private
- */
+/* GET WORKSPACE STATS */
 export const getStudyStats = async (req, res, next) => {
   try {
-    if (!req.user.workspaceId) {
-      return res
-        .status(400)
-        .json({ message: "User not part of any workspace" });
-    }
-
     const logs = await Study.find({
       workspace: req.user.workspaceId,
     });
 
-    const totalHours = logs.reduce((sum, log) => sum + log.hours, 0);
-    const totalSessions = logs.length;
+    const totalHours = logs.reduce((a, b) => a + b.hours, 0);
 
     res.json({
       totalHours,
-      totalSessions,
+      totalSessions: logs.length,
     });
-  } catch (error) {
-    next(error);
+  } catch (err) {
+    next(err);
   }
 };
