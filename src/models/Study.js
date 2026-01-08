@@ -6,14 +6,14 @@ const studySchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      index: true, // improves activity queries
+      index: true,
     },
 
     workspace: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Workspace",
       required: true,
-      index: true, // important for workspace-based sharing
+      index: true,
     },
 
     hours: {
@@ -39,6 +39,24 @@ const studySchema = new mongoose.Schema(
   {
     timestamps: true, // createdAt & updatedAt used in activity & stats
   }
+);
+
+/* =========================================================
+   INDEXES
+   - Optimized for workspace activity & daily updates
+========================================================= */
+
+/* Faster workspace feed */
+studySchema.index({ workspace: 1, createdAt: -1 });
+
+/* Prevent multiple logs per user per day per workspace */
+studySchema.index(
+  {
+    user: 1,
+    workspace: 1,
+    createdAt: 1,
+  },
+  { unique: false }
 );
 
 export default mongoose.model("Study", studySchema);

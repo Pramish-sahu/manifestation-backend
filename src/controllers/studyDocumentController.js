@@ -3,15 +3,27 @@ import StudyDocument from "../models/StudyDocument.js";
 /* =========================================================
    📤 UPLOAD DOCUMENT (WORKSPACE SHARED)
    POST /api/study/documents
-   ========================================================= */
+========================================================= */
 export const uploadDocument = async (req, res, next) => {
   try {
     const { title, category, fileUrl } = req.body;
 
     /* 🔒 VALIDATION */
-    if (!title || !category || !fileUrl) {
+    if (!title?.trim()) {
       return res.status(400).json({
-        message: "Title, category and file are required",
+        message: "Document title is required",
+      });
+    }
+
+    if (!category) {
+      return res.status(400).json({
+        message: "Document category is required",
+      });
+    }
+
+    if (!fileUrl) {
+      return res.status(400).json({
+        message: "Document file is required",
       });
     }
 
@@ -32,6 +44,7 @@ export const uploadDocument = async (req, res, next) => {
 
     /* 🎉 RESPONSE */
     res.status(201).json({
+      success: true,
       message: "Document uploaded successfully",
       document,
     });
@@ -41,9 +54,9 @@ export const uploadDocument = async (req, res, next) => {
 };
 
 /* =========================================================
-   📥 GET DOCUMENTS (WORKSPACE + CATEGORY FILTER)
+   📥 GET DOCUMENTS
    GET /api/study/documents?category=study_material
-   ========================================================= */
+========================================================= */
 export const getDocuments = async (req, res, next) => {
   try {
     if (!req.user?.workspaceId) {
@@ -63,7 +76,8 @@ export const getDocuments = async (req, res, next) => {
 
     const documents = await StudyDocument.find(filter)
       .populate("uploadedBy", "name")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean(); // ⚡ performance
 
     res.json(documents);
   } catch (error) {

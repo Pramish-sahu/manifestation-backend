@@ -9,7 +9,9 @@ export const addStudyLog = async (req, res, next) => {
   try {
     const { hours, topic, note } = req.body;
 
-    if (!hours || hours <= 0 || !topic?.trim()) {
+    const parsedHours = Number(hours);
+
+    if (!parsedHours || parsedHours <= 0 || !topic?.trim()) {
       return res.status(400).json({
         message: "Valid study hours and topic are required",
       });
@@ -21,7 +23,7 @@ export const addStudyLog = async (req, res, next) => {
       });
     }
 
-    /* 📅 TODAY RANGE (00:00 → 23:59) */
+    /* 📅 TODAY RANGE (SERVER SAFE) */
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
 
@@ -36,13 +38,14 @@ export const addStudyLog = async (req, res, next) => {
     });
 
     if (existingLog) {
-      existingLog.hours = hours;
+      existingLog.hours = parsedHours;
       existingLog.topic = topic.trim();
       existingLog.note = note?.trim() || "";
 
       await existingLog.save();
 
       return res.json({
+        success: true,
         message: "Today's study log updated",
         study: existingLog,
       });
@@ -52,24 +55,24 @@ export const addStudyLog = async (req, res, next) => {
     const study = await Study.create({
       user: req.user._id,
       workspace: req.user.workspaceId,
-      hours,
+      hours: parsedHours,
       topic: topic.trim(),
       note: note?.trim() || "",
     });
 
     res.status(201).json({
+      success: true,
       message: "Study log added",
       study,
     });
-  } catch (err) {
-    next(err);
+  } catch (error) {
+    next(error);
   }
 };
 
 /* =========================================================
    GET WORKSPACE STUDY ACTIVITY
    - Used by StudyActivity screen
-   - Shows name + hours + topic + date
 ========================================================= */
 export const getStudyLogs = async (req, res, next) => {
   try {
@@ -84,11 +87,12 @@ export const getStudyLogs = async (req, res, next) => {
     })
       .populate("user", "name")
       .sort({ createdAt: -1 })
-      .limit(100); // safety for production
+      .limit(100)
+      .lean(); // ⚡ performance
 
     res.json(logs);
-  } catch (err) {
-    next(err);
+  } catch (error) {
+    next(error);
   }
 };
 
@@ -104,9 +108,10 @@ export const getStudyStats = async (req, res, next) => {
       });
     }
 
-    const logs = await Study.find({
-      workspace: req.user.workspaceId,
-    });
+    const logs = await Study.find(
+      { workspace: req.user.workspaceId },
+      { hours: 1 }
+    ).lean();
 
     const totalHours = logs.reduce(
       (sum, log) => sum + (log.hours || 0),
@@ -117,7 +122,7 @@ export const getStudyStats = async (req, res, next) => {
       totalHours,
       totalSessions: logs.length,
     });
-  } catch (err) {
-    next(err);
+  } catch (error) {
+    next(error);
   }
 };

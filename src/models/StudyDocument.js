@@ -7,6 +7,7 @@ const studyDocumentSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
+      maxlength: 200,
     },
 
     /* 🗂 CATEGORY (USED FOR FILTERING IN UI) */
@@ -14,12 +15,14 @@ const studyDocumentSchema = new mongoose.Schema(
       type: String,
       enum: ["admit_card", "study_material", "exam_doc"],
       required: true,
+      index: true,
     },
 
     /* 🔗 FILE URL (S3 / Cloudinary / Local later) */
     fileUrl: {
       type: String,
       required: true,
+      trim: true,
     },
 
     /* 👤 WHO UPLOADED */
@@ -27,6 +30,7 @@ const studyDocumentSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
+      index: true,
     },
 
     /* 👥 WORKSPACE (SHARED VISIBILITY) */
@@ -42,7 +46,14 @@ const studyDocumentSchema = new mongoose.Schema(
   }
 );
 
-/* 🚀 INDEX FOR FAST CATEGORY + WORKSPACE QUERY */
+/* =========================================================
+   INDEXES
+========================================================= */
+
+/* Fast workspace + category filtering */
 studyDocumentSchema.index({ workspace: 1, category: 1 });
+
+/* Fast recent uploads */
+studyDocumentSchema.index({ workspace: 1, createdAt: -1 });
 
 export default mongoose.model("StudyDocument", studyDocumentSchema);

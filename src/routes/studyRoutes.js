@@ -8,8 +8,18 @@ import protect from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
+/* =========================================================
+   📌 STUDY ROUTES (WORKSPACE SHARED)
+   Base: /api/study
+========================================================= */
+
+/* ➕ ADD / UPDATE TODAY'S STUDY LOG */
 router.post("/log", protect, addStudyLog);
-router.get("/", protect, getStudyLogs);
+
+/* 📊 GET WORKSPACE STUDY STATS */
 router.get("/stats", protect, getStudyStats);
+
+/* 📋 GET WORKSPACE STUDY ACTIVITY */
+router.get("/", protect, getStudyLogs);
 
 export default router;
