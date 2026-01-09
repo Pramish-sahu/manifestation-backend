@@ -10,20 +10,24 @@ export const markActivity = async (req, res, next) => {
       return res.status(400).json({ message: "Activity required" });
     }
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    // ✅ TIMEZONE SAFE DAY RANGE
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+
+    const end = new Date();
+    end.setHours(23, 59, 59, 999);
 
     let record = await DailyActivity.findOne({
       user: req.user._id,
       workspace: req.user.workspaceId,
-      date: today,
+      date: { $gte: start, $lte: end },
     });
 
     if (!record) {
       record = await DailyActivity.create({
         user: req.user._id,
         workspace: req.user.workspaceId,
-        date: today,
+        date: start,
         activities: { [activity]: true },
       });
     } else {
@@ -52,7 +56,7 @@ export const getCalendarData = async (req, res, next) => {
   }
 };
 
-/* ================= OLD STREAK LOGIC ================= */
+/* ================= OLD STREAK LOGIC (UNCHANGED) ================= */
 export const completeStreak = async (req, res, next) => {
   try {
     const { type } = req.body;
