@@ -3,6 +3,7 @@ import express from "express";
 
 import errorHandler from "./middleware/errorMiddleware.js";
 import authRoutes from "./routes/authRoutes.js";
+import dailyActivityRoutes from "./routes/dailyActivityRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
 import familyRoutes from "./routes/familyRoutes.js"; // ✅ ADD THIS
 import manifestationRoutes from "./routes/manifestationRoutes.js";
@@ -32,6 +33,8 @@ app.use("/api/streak", streakRoutes);
 app.use("/api/manifestation", manifestationRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/timeline", timelineRoutes);
+app.use("/api/activity", dailyActivityRoutes);
+
 
 app.use(errorHandler);
 
