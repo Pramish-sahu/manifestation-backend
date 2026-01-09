@@ -4,14 +4,16 @@ const workspaceSchema = new mongoose.Schema(
   {
     type: {
       type: String,
-      enum: ["couple", "family", "friends"],
+      enum: ["solo", "couple", "family", "friends"], // ✅ ADDED SOLO
       required: true,
     },
+
     inviteCode: {
       type: String,
       unique: true,
       required: true,
     },
+
     members: [
       {
         type: mongoose.Schema.Types.ObjectId,
