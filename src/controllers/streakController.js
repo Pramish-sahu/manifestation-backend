@@ -1,16 +1,31 @@
 import DailyActivity from "../models/DailyActivity.js";
 import Streak from "../models/Streak.js";
+import Workspace from "../models/Workspace.js";
+
+/* ================= HELPER ================= */
+const getUserWorkspaceId = async (userId) => {
+  const workspace = await Workspace.findOne({
+    members: userId,
+  }).select("_id");
+
+  return workspace?._id || null;
+};
 
 /* ================= MARK DAILY ACTIVITY ================= */
 export const markActivity = async (req, res, next) => {
   try {
     const { activity } = req.body;
-
     if (!activity) {
       return res.status(400).json({ message: "Activity required" });
     }
 
-    // ✅ TIMEZONE SAFE DAY RANGE
+    // 🔑 ALWAYS DERIVE WORKSPACE (FIX)
+    const workspaceId = await getUserWorkspaceId(req.user._id);
+    if (!workspaceId) {
+      return res.status(400).json({ message: "User has no workspace" });
+    }
+
+    // ✅ DAY RANGE (timezone safe)
     const start = new Date();
     start.setHours(0, 0, 0, 0);
 
@@ -19,14 +34,14 @@ export const markActivity = async (req, res, next) => {
 
     let record = await DailyActivity.findOne({
       user: req.user._id,
-      workspace: req.user.workspaceId,
+      workspace: workspaceId,
       date: { $gte: start, $lte: end },
     });
 
     if (!record) {
       record = await DailyActivity.create({
         user: req.user._id,
-        workspace: req.user.workspaceId,
+        workspace: workspaceId,
         date: start,
         activities: { [activity]: true },
       });
@@ -44,8 +59,13 @@ export const markActivity = async (req, res, next) => {
 /* ================= CALENDAR DATA ================= */
 export const getCalendarData = async (req, res, next) => {
   try {
+    const workspaceId = await getUserWorkspaceId(req.user._id);
+    if (!workspaceId) {
+      return res.json([]);
+    }
+
     const data = await DailyActivity.find({
-      workspace: req.user.workspaceId,
+      workspace: workspaceId,
     })
       .populate("user", "name")
       .sort({ date: -1 });
@@ -75,7 +95,7 @@ export const completeStreak = async (req, res, next) => {
         longestStreak: 1,
         lastCompleted: today,
         user: req.user._id,
-        workspace: req.user.workspaceId,
+        workspace: await getUserWorkspaceId(req.user._id),
       });
       return res.json(streak);
     }
