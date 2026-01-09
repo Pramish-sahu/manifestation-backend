@@ -18,6 +18,11 @@ const vaultSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    importance: {
+      type: String,
+      enum: ["high", "medium", "low"],
+      default: "medium",
+    },
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -32,5 +37,4 @@ const vaultSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-const Vault = mongoose.model("Vault", vaultSchema);
-export default Vault;
+export default mongoose.model("Vault", vaultSchema);

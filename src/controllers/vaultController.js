@@ -1,26 +1,23 @@
 import Vault from "../models/Vault.js";
 import { decrypt, encrypt } from "../utils/encrypt.js";
 
-/**
- * @desc   Add vault item
- * @route  POST /api/vault
- * @access Private
- */
+/* ================= ADD PASSWORD ================= */
 export const addVaultItem = async (req, res, next) => {
   try {
-    const { title, username, secret, note } = req.body;
+    const { title, username, secret, note, importance } = req.body;
 
     if (!title || !username || !secret) {
-      return res.status(400).json({ message: "Missing fields" });
+      return res.status(400).json({ message: "Missing required fields" });
     }
 
     const encrypted = encrypt(secret);
 
     const vault = await Vault.create({
-      title,
-      username,
+      title: title.trim(),
+      username: username.trim(),
       secret: encrypted,
-      note,
+      note: note?.trim() || "",
+      importance: importance || "medium",
       user: req.user._id,
       workspace: req.user.workspaceId,
     });
@@ -31,16 +28,14 @@ export const addVaultItem = async (req, res, next) => {
   }
 };
 
-/**
- * @desc   Get all vault items
- * @route  GET /api/vault
- * @access Private
- */
+/* ================= GET PASSWORDS ================= */
 export const getVaultItems = async (req, res, next) => {
   try {
     const items = await Vault.find({
       workspace: req.user.workspaceId,
-    }).populate("user", "name username");
+    })
+      .populate("user", "name")
+      .sort({ createdAt: -1 });
 
     const decrypted = items.map((item) => ({
       ...item.toObject(),
@@ -53,11 +48,7 @@ export const getVaultItems = async (req, res, next) => {
   }
 };
 
-/**
- * @desc   Delete vault item
- * @route  DELETE /api/vault/:id
- * @access Private
- */
+/* ================= DELETE ================= */
 export const deleteVaultItem = async (req, res, next) => {
   try {
     const item = await Vault.findById(req.params.id);
