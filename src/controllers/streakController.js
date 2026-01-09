@@ -2,7 +2,10 @@ import DailyActivity from "../models/DailyActivity.js";
 import Streak from "../models/Streak.js";
 import Workspace from "../models/Workspace.js";
 
-/* ================= HELPER ================= */
+/* =========================================================
+   🔑 HELPER: ALWAYS GET WORKSPACE FROM MEMBERSHIP
+   (Fixes joined-user streak issue)
+========================================================= */
 const getUserWorkspaceId = async (userId) => {
   const workspace = await Workspace.findOne({
     members: userId,
@@ -11,38 +14,41 @@ const getUserWorkspaceId = async (userId) => {
   return workspace?._id || null;
 };
 
-/* ================= MARK DAILY ACTIVITY ================= */
+/* =========================================================
+   ✅ MARK DAILY ACTIVITY (USED BY MANTRA / 11:11 / ETC)
+========================================================= */
 export const markActivity = async (req, res, next) => {
   try {
     const { activity } = req.body;
+
     if (!activity) {
       return res.status(400).json({ message: "Activity required" });
     }
 
-    // 🔑 ALWAYS DERIVE WORKSPACE (FIX)
+    // 🔥 IMPORTANT FIX: derive workspace dynamically
     const workspaceId = await getUserWorkspaceId(req.user._id);
     if (!workspaceId) {
       return res.status(400).json({ message: "User has no workspace" });
     }
 
-    // ✅ DAY RANGE (timezone safe)
-    const start = new Date();
-    start.setHours(0, 0, 0, 0);
+    /* 📅 TODAY (timezone-safe) */
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
 
-    const end = new Date();
-    end.setHours(23, 59, 59, 999);
+    const endOfDay = new Date();
+    endOfDay.setHours(23, 59, 59, 999);
 
     let record = await DailyActivity.findOne({
       user: req.user._id,
       workspace: workspaceId,
-      date: { $gte: start, $lte: end },
+      date: { $gte: startOfDay, $lte: endOfDay },
     });
 
     if (!record) {
       record = await DailyActivity.create({
         user: req.user._id,
         workspace: workspaceId,
-        date: start,
+        date: startOfDay,
         activities: { [activity]: true },
       });
     } else {
@@ -56,10 +62,13 @@ export const markActivity = async (req, res, next) => {
   }
 };
 
-/* ================= CALENDAR DATA ================= */
+/* =========================================================
+   📆 GET CALENDAR DATA (WORKSPACE SHARED)
+========================================================= */
 export const getCalendarData = async (req, res, next) => {
   try {
     const workspaceId = await getUserWorkspaceId(req.user._id);
+
     if (!workspaceId) {
       return res.json([]);
     }
@@ -76,7 +85,9 @@ export const getCalendarData = async (req, res, next) => {
   }
 };
 
-/* ================= OLD STREAK LOGIC (UNCHANGED) ================= */
+/* =========================================================
+   🔥 LEGACY STREAK LOGIC (UNCHANGED, SAFE)
+========================================================= */
 export const completeStreak = async (req, res, next) => {
   try {
     const { type } = req.body;
@@ -97,6 +108,7 @@ export const completeStreak = async (req, res, next) => {
         user: req.user._id,
         workspace: await getUserWorkspaceId(req.user._id),
       });
+
       return res.json(streak);
     }
 
