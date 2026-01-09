@@ -9,8 +9,10 @@ import manifestationRoutes from "./routes/manifestationRoutes.js";
 import streakRoutes from "./routes/streakRoutes.js";
 import studyDocumentRoutes from "./routes/studyDocumentRoutes.js";
 import studyRoutes from "./routes/studyRoutes.js";
+import timelineRoutes from "./routes/timelineRoutes.js";
 import vaultRoutes from "./routes/vaultRoutes.js";
 import workspaceRoutes from "./routes/workspaceRoutes.js";
+
 
 const app = express();
 
@@ -29,6 +31,7 @@ app.use("/api/vault", vaultRoutes);
 app.use("/api/streak", streakRoutes);
 app.use("/api/manifestation", manifestationRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/timeline", timelineRoutes);
 
 app.use(errorHandler);
 
